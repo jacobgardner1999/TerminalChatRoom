@@ -6,9 +6,10 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gorilla/websocket"
+    "github.com/rivo/tview"
+    "github.com/gdamore/tcell/v2"
 )
 
 const serverAddress = "ws://localhost:8080/ws"
@@ -37,9 +38,39 @@ func main() {
     user := getUserInfo()
     setUsername(user.Username)
     joinChatRoom(user)
-    go readMessages()
-    handleUserInput()
+
+    app := tview.NewApplication()
+
+	inputField := tview.NewInputField()
+    inputField.SetLabel("Type your message: ").
+        SetFieldWidth(50).
+        SetDoneFunc(func(key tcell.Key) {
+            if key == tcell.KeyEnter {
+                sendMessage(inputField.GetText())
+                inputField.SetText("")
+            }
+        })
+
+	chatTextView := tview.NewTextView().
+		SetTextAlign(tview.AlignLeft).
+		SetText("Chat Room: " + user.Room + "\n").
+		SetDynamicColors(true).
+        SetChangedFunc(func() {
+			app.Draw()
+		})
+
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(chatTextView, 0, 1, false).
+		AddItem(inputField, 3, 1, true)
+
+    go readMessages(app, chatTextView)
+
+	if err := app.SetRoot(flex, true).Run(); err != nil {
+		log.Fatal("Error running application: ", err)
+	}
 }
+
 
 func initWebSocket() error {
     var err error
@@ -63,19 +94,7 @@ func joinChatRoom(user User) {
     sendMessage(fmt.Sprintf("/join %s", user.Room))
 }
 
-func handleUserInput() {
-    scanner := bufio.NewScanner(os.Stdin)
-    for {
-        time.Sleep(10 * time.Millisecond)
-        fmt.Print("Enter message or command: ")
-        scanner.Scan()
-        input := scanner.Text()
-
-        sendMessage(input)
-    }
-}
-
-func readMessages() {
+func readMessages(app *tview.Application, chatTextView *tview.TextView) {
     for {
         _, message, err := conn.ReadMessage()
         if err != nil {
@@ -89,7 +108,13 @@ func readMessages() {
             continue
         }
 
-        fmt.Printf("[%s] %s: %s\n", parsedMessage.Timestamp, parsedMessage.Sender, parsedMessage.Content)
+        app.QueueUpdateDraw(func() {
+            chatTextView.SetText(chatTextView.GetText(true) + fmt.Sprintf("[%s] %s: %s\n",
+            parsedMessage.Timestamp,
+            parsedMessage.Sender,
+            parsedMessage.Content))
+            chatTextView.ScrollToEnd()
+        })
     }
 }
 
