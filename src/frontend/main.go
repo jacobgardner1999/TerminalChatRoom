@@ -44,6 +44,7 @@ func main() {
 	inputField := tview.NewInputField()
     inputField.SetLabel("Type your message: ").
         SetFieldWidth(50).
+        SetFieldBackgroundColor(tcell.ColorBlack).
         SetDoneFunc(func(key tcell.Key) {
             if key == tcell.KeyEnter {
                 sendMessage(inputField.GetText())
