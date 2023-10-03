@@ -1,40 +1,50 @@
 package main
 
+import (
+	"sync"
+)
+
 type Hub struct {
-    clients map[*Client]bool
-    broadcast chan []byte
-    register chan *Client
-    unregister chan *Client
+	rooms map[string]*Room
+	mu    sync.Mutex
 }
 
-func newHub() *Hub {
-    return &Hub {
-        broadcast: make(chan []byte),
-        register: make(chan *Client),
-        unregister: make(chan *Client),
-        clients: make(map[*Client]bool),
-    }
+func NewHub() *Hub {
+	return &Hub{
+		rooms: make(map[string]*Room),
+	}
 }
 
-func (h *Hub) run() {
-    for {
-        select {
-        case client := <-h.register:
-            h.clients[client] = true
-        case client := <-h.unregister:
-            if _, ok := h.clients[client]; ok {
-                delete(h.clients, client)
-                close(client.send)
-            }
-        case message := <-h.broadcast:
-            for client := range h.clients {
-                select {
-                case client.send <- message:
-                default:
-                    close(client.send)
-                    delete(h.clients, client)
-                }
-            }
-        }
-    }
+func (h *Hub) RegisterClient(client *Client, roomName string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	room, ok := h.rooms[roomName]
+	if !ok {
+		room = NewRoom(roomName)
+		h.rooms[roomName] = room
+	}
+
+	room.RegisterClient(client)
+}
+
+func (h *Hub) UnregisterClient(client *Client, roomName string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if room, ok := h.rooms[roomName]; ok {
+		room.UnregisterClient(client)
+		if len(room.clients) == 0 {
+			delete(h.rooms, roomName)
+		}
+	}
+}
+
+func (h *Hub) BroadcastToRoom(roomName string, message []byte) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if room, ok := h.rooms[roomName]; ok {
+		room.Broadcast(message)
+	}
 }
