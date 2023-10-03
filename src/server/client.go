@@ -61,7 +61,7 @@ func (c *Client) readPump(hub *Hub) {
             if !c.handleCommand(string(message), hub) {
                 log.Printf("Unknown command: %s", message)
 		} else {
-			c.room.Broadcast(message)
+			c.room.Broadcast(c.username, message)
 		}
 	}
 }
@@ -78,25 +78,25 @@ func (c *Client) handleCommand(command string, hub *Hub) bool {
 		return c.handleJoinCommand(parts, hub)
 	case "/name":
 		return c.handleNameCommand(parts)
+    case "/rooms":
+        return c.handleRoomsCommand(hub)
 	default:
 		return false
 	}
 }
 
 func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
-    if len(parts) != 3 {
+    if len(parts) != 2 {
 		log.Println("Invalid /join command format")
 		return false
 	}
 
-	username := parts[1]
-	roomName := parts[2]
+	roomName := parts[1]
 
-	c.username = username
     c.hub.RegisterClient(c, roomName)
 	c.room = hub.GetRoom(roomName)
 
-	c.room.Broadcast([]byte(fmt.Sprintf("%s joined the room", c.username)))
+	c.room.Broadcast("Server", []byte(fmt.Sprintf("%s joined the room", c.username)))
 
 	return true
 }
@@ -111,7 +111,22 @@ func (c *Client) handleNameCommand(parts []string) bool {
     oldName := c.username
 
     c.username = newName
-    c.room.Broadcast([]byte(fmt.Sprintf("%s set their name to %s", oldName, newName)))
+    log.Println(c.username)
+    c.room.Broadcast("Server", []byte(fmt.Sprintf("%s set their name to %s", oldName, newName)))
+
+    return true
+}
+
+func (c *Client) handleRoomsCommand(hub *Hub) bool {
+    var roomList []string
+
+	for roomName := range hub.rooms {
+		roomList = append(roomList, roomName)
+	}
+
+	message := "Room List: " + strings.Join(roomList, ", ")
+
+    c.room.Broadcast("Server", []byte(message))
 
     return true
 }
@@ -163,7 +178,8 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
     }
     client := &Client{hub: hub, username: "New User", conn: conn, send: make(chan []byte, 256)}
     hub.RegisterClient(client, "waitingRoom")
-
+    
+    log.Println(client.username, client.room.name)
     go client.writePump()
     go client.readPump(hub)
 }

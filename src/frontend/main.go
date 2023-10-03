@@ -6,7 +6,6 @@ import (
     "log"
 	"os"
     "strings"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,7 +22,7 @@ type User struct {
 type Message struct {
     Sender string
     Content string
-    Timestamp time.Time
+    Timestamp string
 }
 
 func main() {
@@ -60,7 +59,7 @@ func setUsername(username string) {
 }
 
 func joinChatRoom(user User) { 
-    sendMessage(fmt.Sprintf("/join %s %s", user.Username, user.Room))
+    sendMessage(fmt.Sprintf("/join %s", user.Room))
 }
 
 func handleUserInput() {
@@ -70,23 +69,7 @@ func handleUserInput() {
         scanner.Scan()
         input := scanner.Text()
 
-        if strings.HasPrefix(input, ":") {
-            handleCommand(input[1:])
-        } else {
-            sendMessage(input)
-        }
-    }
-}
-
-func handleCommand(command string) {
-    switch command {
-    case "leave": 
-        sendMessage("/leave")
-    case "changename":
-        newName := getInput("Enter your new name: ")
-        sendMessage(fmt.Sprintf("/changename %s", newName))
-    default: 
-        fmt.Println("Unknown command: ", command)
+        sendMessage(input)
     }
 }
 
@@ -104,7 +87,7 @@ func readMessages() {
             continue
         }
 
-        fmt.Printf("[%s] %s: %s\n", parsedMessage.Timestamp.Format("HH:MM"), parsedMessage.Sender, parsedMessage.Content)
+        fmt.Printf("[%s] %s: %s\n", parsedMessage.Timestamp, parsedMessage.Sender, parsedMessage.Content)
     }
 }
 
@@ -121,11 +104,8 @@ func parseMessage(rawMessage []byte) (Message, error) {
         return Message{}, fmt.Errorf("invalid message format")
     }
     sender := parts[0]
-    content := parts[1]
-    timestamp, err := time.Parse(time.RFC3339, parts[2])
-    if err != nil {
-        return Message{}, fmt.Errorf("invalid timestamp format")
-    }
+    timestamp := parts[1]
+    content := parts[2]
     return Message{Sender: sender, Content: content, Timestamp: timestamp}, nil
 }
 

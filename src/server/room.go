@@ -1,7 +1,10 @@
 package main
 
 import (
+    "fmt"
 	"sync"
+	"time"
+    "log"
 )
 
 type Room struct {
@@ -29,15 +32,22 @@ func (r *Room) UnregisterClient(client *Client) {
 	delete(r.clients, client)
 }
 
-func (r *Room) Broadcast(message []byte) {
+func (r *Room) Broadcast(username string, content []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+    currentTime := time.Now()
+    formattedTime := currentTime.Format("15:04")
+
+    message := fmt.Sprintf("%s|%s|%s", username, formattedTime, string(content))
+    log.Println(message)
+
 	for client := range r.clients {
 		select {
-		case client.send <- message:
+		case client.send <- []byte(message):
 		default:
 			close(client.send)
 			delete(r.clients, client)
 		}
-	}
+    }
 }

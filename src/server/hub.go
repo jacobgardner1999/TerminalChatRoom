@@ -69,6 +69,6 @@ func (h *Hub) BroadcastToRoom(roomName string, message []byte) {
 	defer h.mu.Unlock()
 
 	if room, ok := h.rooms[roomName]; ok {
-		room.Broadcast(message)
+		room.Broadcast("Server", message)
 	}
 }
