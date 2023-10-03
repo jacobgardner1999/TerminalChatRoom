@@ -100,6 +100,8 @@ func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
 	c.room = hub.GetRoom(roomName)
 
 	c.room.Broadcast("Server", []byte(fmt.Sprintf("%s joined the room", c.username)))
+    message := fmt.Sprintf("/userRoom %s", c.room.name) 
+    c.send <- []byte(message)
 
 	return true
 }
