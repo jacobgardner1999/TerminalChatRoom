@@ -1,6 +1,7 @@
 package main
 
 import (
+    "log"
 	"sync"
 )
 
@@ -19,13 +20,18 @@ func (h *Hub) RegisterClient(client *Client, roomName string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	room, ok := h.rooms[roomName]
-	if !ok {
-		room = NewRoom(roomName)
-		h.rooms[roomName] = room
-	}
+    if client == nil {
+        log.Println("RegisterClient: Client is nil")
+        return
+    }
+
+    room, ok := h.rooms[roomName]
+    if !ok {
+        room = NewRoom(roomName)
+        h.rooms[roomName] = room
+    }
     client.room = room
-	room.RegisterClient(client)
+    room.RegisterClient(client)
 }
 
 func (h *Hub) UnregisterClient(client *Client, roomName string) {
@@ -42,13 +48,20 @@ func (h *Hub) UnregisterClient(client *Client, roomName string) {
 
 func (h *Hub) GetRoom(roomName string) *Room {
     h.mu.Lock()
-	defer h.mu.Unlock()
+    defer h.mu.Unlock()
 
-    if room, ok := h.rooms[roomName]; ok {
-        return room
-    } else {
+    if roomName == "" {
+        log.Println("GetRoom: Empty room name")
         return nil
     }
+
+    room, ok := h.rooms[roomName]
+    if !ok {
+        room = NewRoom(roomName)
+        h.rooms[roomName] = room
+    }
+
+    return room
 }
 
 func (h *Hub) BroadcastToRoom(roomName string, message []byte) {

@@ -93,8 +93,8 @@ func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
 	roomName := parts[2]
 
 	c.username = username
+    c.hub.RegisterClient(c, roomName)
 	c.room = hub.GetRoom(roomName)
-	c.room.RegisterClient(c)
 
 	c.room.Broadcast([]byte(fmt.Sprintf("%s joined the room", c.username)))
 
@@ -102,7 +102,7 @@ func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
 }
 
 func (c *Client) handleNameCommand(parts []string) bool {
-    if len(parts) != 1 {
+    if len(parts) != 2 {
         log.Println("Invalid /name command format")
         return false
     }
@@ -161,7 +161,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
         log.Println(err)
         return
     }
-    client := &Client{username: "New User", conn: conn, send: make(chan []byte, 256)}
+    client := &Client{hub: hub, username: "New User", conn: conn, send: make(chan []byte, 256)}
     hub.RegisterClient(client, "waitingRoom")
 
     go client.writePump()
