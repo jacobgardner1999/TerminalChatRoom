@@ -24,7 +24,7 @@ func (h *Hub) RegisterClient(client *Client, roomName string) {
 		room = NewRoom(roomName)
 		h.rooms[roomName] = room
 	}
-
+    client.room = room
 	room.RegisterClient(client)
 }
 
@@ -38,6 +38,17 @@ func (h *Hub) UnregisterClient(client *Client, roomName string) {
 			delete(h.rooms, roomName)
 		}
 	}
+}
+
+func (h *Hub) GetRoom(roomName string) *Room {
+    h.mu.Lock()
+	defer h.mu.Unlock()
+
+    if room, ok := h.rooms[roomName]; ok {
+        return room
+    } else {
+        return nil
+    }
 }
 
 func (h *Hub) BroadcastToRoom(roomName string, message []byte) {

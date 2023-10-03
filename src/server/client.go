@@ -1,6 +1,8 @@
 package main
 
 import (
+    "fmt"
+    "strings"
 	"bytes"
 	"log"
 	"net/http"
@@ -30,28 +32,88 @@ type Client struct {
     hub *Hub
     conn *websocket.Conn
     send chan []byte
-    name *string
+    username string
+    room *Room
 }
 
-func (c *Client) readPump() {
-    defer func() {
-        c.hub.unregister <- c
-        c.conn.Close()
-    }()
-    c.conn.SetReadLimit(maxMessageSize)
-    c.conn.SetReadDeadline(time.Now().Add(pongWait))
-    c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-    for {
-        _, message, err := c.conn.ReadMessage()
-        if err != nil {
-            if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-                log.Printf("error: %v", err)
-            }
-            break
-        }
-        message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-        c.hub.broadcast <- message
+func (c *Client) readPump(hub *Hub) {
+	defer func() {
+		c.room.UnregisterClient(c)
+		c.conn.Close()
+	}()
+
+	c.conn.SetReadLimit(maxMessageSize)
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
+	for {
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+
+		if bytes.HasPrefix(message, []byte("/")) {
+            if !c.handleCommand(string(message), hub) {
+                log.Printf("Unknown command: %s", message)
+		} else {
+			c.room.Broadcast(message)
+		}
+	}
+}
+}
+
+func (c *Client) handleCommand(command string, hub *Hub) bool {
+	parts := strings.Fields(command)
+	if len(parts) < 1 {
+		return false
+	}
+
+	switch parts[0] {
+	case "/join":
+		return c.handleJoinCommand(parts, hub)
+	case "/name":
+		return c.handleNameCommand(parts)
+	default:
+		return false
+	}
+}
+
+func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
+    if len(parts) != 3 {
+		log.Println("Invalid /join command format")
+		return false
+	}
+
+	username := parts[1]
+	roomName := parts[2]
+
+	c.username = username
+	c.room = hub.GetRoom(roomName)
+	c.room.RegisterClient(c)
+
+	c.room.Broadcast([]byte(fmt.Sprintf("%s joined the room", c.username)))
+
+	return true
+}
+
+func (c *Client) handleNameCommand(parts []string) bool {
+    if len(parts) != 1 {
+        log.Println("Invalid /name command format")
+        return false
     }
+
+    newName := parts[1]
+    oldName := c.username
+
+    c.username = newName
+    c.room.Broadcast([]byte(fmt.Sprintf("%s set their name to %s", oldName, newName)))
+
+    return true
 }
 
 func (c *Client) writePump() {
@@ -93,15 +155,15 @@ func (c *Client) writePump() {
     }
 }
 
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, name *string) {
+func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
     conn, err := upgrader.Upgrade(w, r, nil)
     if err != nil {
         log.Println(err)
         return
     }
-    client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), name: name}
-    client.hub.register <- client
+    client := &Client{username: "New User", conn: conn, send: make(chan []byte, 256)}
+    hub.RegisterClient(client, "waitingRoom")
 
     go client.writePump()
-    go client.readPump()
+    go client.readPump(hub)
 }

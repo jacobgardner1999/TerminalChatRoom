@@ -35,6 +35,7 @@ func main() {
     }
 
     user := getUserInfo()
+    setUsername(user.Username)
     joinChatRoom(user)
     go readMessages()
     handleUserInput()
@@ -52,6 +53,10 @@ func getUserInfo() User {
     chatRoom := getInput("Enter your chat room: ")
 
     return User{Username: username, Room: chatRoom}
+}
+
+func setUsername(username string) {
+    sendMessage(fmt.Sprintf("/name %s", username))
 }
 
 func joinChatRoom(user User) { 
