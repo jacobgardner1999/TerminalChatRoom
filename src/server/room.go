@@ -4,7 +4,6 @@ import (
     "fmt"
 	"sync"
 	"time"
-    "log"
 )
 
 type Room struct {
@@ -40,7 +39,6 @@ func (r *Room) Broadcast(username string, content []byte) {
     formattedTime := currentTime.Format("15:04")
 
     message := fmt.Sprintf("%s|%s|%s", username, formattedTime, string(content))
-    log.Println(message)
 
 	for client := range r.clients {
 		select {

@@ -56,14 +56,17 @@ func (c *Client) readPump(hub *Hub) {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-
 		if bytes.HasPrefix(message, []byte("/")) {
             if !c.handleCommand(string(message), hub) {
                 log.Printf("Unknown command: %s", message)
-		} else {
-			c.room.Broadcast(c.username, message)
-		}
-	}
+		    } 
+        } else {
+	        if c.room != nil {
+                c.room.Broadcast(c.username, message)
+            } else {
+                log.Println("Client's room is not set")
+            }
+        }
 }
 }
 
@@ -111,7 +114,6 @@ func (c *Client) handleNameCommand(parts []string) bool {
     oldName := c.username
 
     c.username = newName
-    log.Println(c.username)
     c.room.Broadcast("Server", []byte(fmt.Sprintf("%s set their name to %s", oldName, newName)))
 
     return true
@@ -179,7 +181,6 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
     client := &Client{hub: hub, username: "New User", conn: conn, send: make(chan []byte, 256)}
     hub.RegisterClient(client, "waitingRoom")
     
-    log.Println(client.username, client.room.name)
     go client.writePump()
     go client.readPump(hub)
 }

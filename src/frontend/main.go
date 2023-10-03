@@ -1,11 +1,12 @@
 package main
 
 import (
-    "bufio"
+	"bufio"
 	"fmt"
-    "log"
+	"log"
 	"os"
-    "strings"
+	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -65,6 +66,7 @@ func joinChatRoom(user User) {
 func handleUserInput() {
     scanner := bufio.NewScanner(os.Stdin)
     for {
+        time.Sleep(10 * time.Millisecond)
         fmt.Print("Enter message or command: ")
         scanner.Scan()
         input := scanner.Text()
