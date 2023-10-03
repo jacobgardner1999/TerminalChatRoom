@@ -52,9 +52,16 @@ func main() {
             }
         })
 
+	chatTitle := tview.NewTextView().
+		SetTextAlign(tview.AlignCenter).
+		SetText("Chat Room: " + user.Room + "\n").
+		SetDynamicColors(true).
+        SetChangedFunc(func() {
+			app.Draw()
+		})
+
 	chatTextView := tview.NewTextView().
 		SetTextAlign(tview.AlignLeft).
-		SetText("Chat Room: " + user.Room + "\n").
 		SetDynamicColors(true).
         SetChangedFunc(func() {
 			app.Draw()
@@ -62,8 +69,9 @@ func main() {
 
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(chatTextView, 0, 1, false).
-		AddItem(inputField, 3, 1, true)
+        AddItem(chatTitle, 0, 1, false). 
+		AddItem(chatTextView, 0, 3, false).
+		AddItem(inputField, 3, 2, true)
 
     go readMessages(app, chatTextView)
 
