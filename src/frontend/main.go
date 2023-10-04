@@ -65,7 +65,7 @@ func main() {
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
         AddItem(chatTitle, 0, 1, false). 
-		AddItem(chatTextView, 0, 3, false).
+		AddItem(chatTextView, 0, 9, false).
 		AddItem(inputField, 3, 2, true)
 
     go readMessages(app, chatTextView, chatTitle)
@@ -105,8 +105,7 @@ func readMessages(app *tview.Application, chatTextView *tview.TextView, chatTitl
             break
         }
         if strings.Contains(string(message), "/userRoom") {
-			handleRoomUpdate(string(message), app, chatTitle)
-            writeToChat("inside loop", app, chatTextView)
+			handleRoomUpdate(string(message), app, chatTitle, chatTextView)
 			continue
 		}
 
@@ -130,11 +129,11 @@ func writeToChat(message string, app *tview.Application, chatTextView *tview.Tex
     })
 }
 
-func handleRoomUpdate(message string, app *tview.Application, chatTitle *tview.TextView) {
+func handleRoomUpdate(message string, app *tview.Application, chatTitle *tview.TextView, chatTextView *tview.TextView) {
     parts := strings.Fields(message)
-    if len(parts) == 2 && parts[0] == "/userRoom" {
+    if parts[len(parts)-2] == "/userRoom" {
         app.QueueUpdateDraw(func() {
-            chatTitle.SetText("Chat Room: " + parts[1] + "\n")
+            chatTitle.SetText("Chat Room: " + parts[len(parts)-1] + "\n")
         })
     }
 }
