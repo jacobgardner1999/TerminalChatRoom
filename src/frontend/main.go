@@ -21,6 +21,10 @@ type Message struct {
     Content string
     Timestamp string
 }
+    
+var app = tview.NewApplication()
+var chatTitle = tview.NewTextView()
+var chatTextView = tview.NewTextView()
 
 func main() {
     fmt.Println("Welcome to the Chat CLI")
@@ -34,8 +38,6 @@ func main() {
     setUsername(username)
     joinChatRoom(roomName)
 
-    app := tview.NewApplication()
-
 	inputField := tview.NewInputField()
     inputField.SetLabel("Type your message: ").
         SetFieldWidth(50).
@@ -47,16 +49,14 @@ func main() {
             }
         })
 
-	chatTitle := tview.NewTextView().
-		SetTextAlign(tview.AlignCenter).
+	chatTitle.SetTextAlign(tview.AlignCenter).
 		SetText("Chat Room: " + roomName + "\n").
 		SetDynamicColors(true).
         SetChangedFunc(func() {
 			app.Draw()
 		})
 
-	chatTextView := tview.NewTextView().
-		SetTextAlign(tview.AlignLeft).
+	chatTextView.SetTextAlign(tview.AlignLeft).
 		SetDynamicColors(true).
         SetChangedFunc(func() {
 			app.Draw()
@@ -68,7 +68,7 @@ func main() {
 		AddItem(chatTextView, 0, 9, false).
 		AddItem(inputField, 3, 2, true)
 
-    go readMessages(app, chatTextView, chatTitle)
+    go readMessages()
 
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		log.Fatal("Error running application: ", err)
@@ -97,7 +97,7 @@ func joinChatRoom(roomName string) {
     sendMessage(fmt.Sprintf("/join %s", roomName))
 }
 
-func readMessages(app *tview.Application, chatTextView *tview.TextView, chatTitle *tview.TextView) {
+func readMessages() {
     for {
         _, message, err := conn.ReadMessage()
         if err != nil {
@@ -105,7 +105,7 @@ func readMessages(app *tview.Application, chatTextView *tview.TextView, chatTitl
             break
         }
         if strings.Contains(string(message), "/userRoom") {
-			handleRoomUpdate(string(message), app, chatTitle, chatTextView)
+			handleRoomUpdate(string(message))
 			continue
 		}
 
@@ -118,18 +118,18 @@ func readMessages(app *tview.Application, chatTextView *tview.TextView, chatTitl
         parsedMessage.Timestamp,
         parsedMessage.Sender,
         parsedMessage.Content)
-        writeToChat(m, app, chatTextView)
+        writeToChat(m)
     }
 }
 
-func writeToChat(message string, app *tview.Application, chatTextView *tview.TextView) {
+func writeToChat(message string) {
     app.QueueUpdateDraw(func() {
         chatTextView.SetText(chatTextView.GetText(true) + message)
         chatTextView.ScrollToEnd()
     })
 }
 
-func handleRoomUpdate(message string, app *tview.Application, chatTitle *tview.TextView, chatTextView *tview.TextView) {
+func handleRoomUpdate(message string) {
     parts := strings.Fields(message)
     if parts[len(parts)-2] == "/userRoom" {
         app.QueueUpdateDraw(func() {
