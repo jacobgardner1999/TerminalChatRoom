@@ -134,6 +134,7 @@ func handleRoomUpdate(message string) {
     if parts[len(parts)-2] == "/userRoom" {
         app.QueueUpdateDraw(func() {
             chatTitle.SetText("Chat Room: " + parts[len(parts)-1] + "\n")
+            chatTextView.SetText("")
         })
     }
 }
