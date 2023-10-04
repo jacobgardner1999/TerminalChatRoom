@@ -148,7 +148,7 @@ func sendMessage(message string) {
 func parseMessage(rawMessage []byte) (Message, error) {
     parts := strings.Split(string(rawMessage), "|")
     if len(parts) != 3 {
-        return Message{}, fmt.Errorf("invalid message format")
+        return Message{}, fmt.Errorf("invalid message format. Expected length 3, got length" + fmt.Sprint(len(parts)) + "\n" + string(rawMessage))
     }
     sender := parts[0]
     timestamp := parts[1]

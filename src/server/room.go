@@ -49,3 +49,4 @@ func (r *Room) Broadcast(username string, content []byte) {
 		}
     }
 }
+

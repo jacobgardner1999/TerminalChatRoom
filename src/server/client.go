@@ -130,7 +130,8 @@ func (c *Client) handleRoomsCommand(hub *Hub) bool {
 
 	message := "Room List: " + strings.Join(roomList, ", ")
 
-    c.room.Broadcast("Server", []byte(message))
+    currentTime := time.Now().Format("15:04")
+    c.send <- []byte("Server|" + currentTime + "|" + message)
 
     return true
 }
