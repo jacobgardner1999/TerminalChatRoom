@@ -96,6 +96,7 @@ func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
 
 	roomName := parts[1]
 
+    c.room.UnregisterClient(c)
     c.hub.RegisterClient(c, roomName)
 	c.room = hub.GetRoom(roomName)
 

@@ -30,12 +30,14 @@ var chatTextView = tview.NewTextView()
 func main() {
     fmt.Println("Welcome to the Chat CLI")
     fmt.Println("Connecting to Server...")
+    time.Sleep(2000 * time.Millisecond)
 
     err := initWebSocket()
     if err != nil {
         log.Fatal("Error connecting to WebSocket: ", err)
     }
     fmt.Println("Connected! Entering Waiting Room...")
+    time.Sleep(2000 * time.Millisecond)
 
 	inputField := tview.NewInputField()
     inputField.SetLabel("Type your message: ").
