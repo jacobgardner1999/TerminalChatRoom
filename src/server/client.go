@@ -83,6 +83,8 @@ func (c *Client) handleCommand(command string, hub *Hub) bool {
 		return c.handleNameCommand(parts)
     case "/rooms":
         return c.handleRoomsCommand(hub)
+    case "/help":
+        return c.handleHelpCommand()
 	default:
 		return false
 	}
@@ -139,6 +141,21 @@ func (c *Client) handleRoomsCommand(hub *Hub) bool {
     return true
 }
 
+func (c *Client) handleHelpCommand() bool {
+    helpMessage := `Welcome to your terminal chatroom! This is a short help message to get you started! 
+                To access this help page, just send /help in the chat!
+
+                Here's a list of other commands: 
+                    /join {room} - join a room, will create one if the name does not exist 
+                    /name {newName} - change your display name 
+                    /rooms - list the open rooms `
+
+    currentTime := time.Now().Format("15:04")
+    c.send <- []byte("Server|" + currentTime + "|" + helpMessage)
+    
+    return true
+}
+
 func (c *Client) writePump() {
     ticker := time.NewTicker(pingPeriod)
     defer func() {
@@ -185,6 +202,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
     }
     client := &Client{hub: hub, username: "New User", conn: conn, send: make(chan []byte, 256)}
     hub.RegisterClient(client, "waitingRoom")
+    client.handleHelpCommand()
     
     go client.writePump()
     go client.readPump(hub)
