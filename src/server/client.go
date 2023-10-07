@@ -1,11 +1,11 @@
 package main
 
 import (
-    "fmt"
-    "strings"
 	"bytes"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -85,6 +85,8 @@ func (c *Client) handleCommand(command string, hub *Hub) bool {
         return c.handleRoomsCommand(hub)
     case "/help":
         return c.handleHelpCommand()
+    case "/quit":
+        return c.handleQuitCommand()
 	default:
 		return false
 	}
@@ -148,11 +150,22 @@ func (c *Client) handleHelpCommand() bool {
                 Here's a list of other commands: 
                     /join {room} - join a room, will create one if the name does not exist 
                     /name {newName} - change your display name 
-                    /rooms - list the open rooms `
+                    /rooms - list the open rooms
+                    /quit - quit the program`
 
     currentTime := time.Now().Format("15:04")
     c.send <- []byte("Server|" + currentTime + "|" + helpMessage)
     
+    return true
+}
+
+func (c *Client) handleQuitCommand() bool {
+    currentTime := time.Now().Format("15:04")
+    c.send <- []byte("Server|" + currentTime + "|Exiting program...")
+    time.Sleep(2000 *time.Millisecond)
+    c.send <- []byte("/quit") 
+    c.room.UnregisterClient(c)
+
     return true
 }
 
