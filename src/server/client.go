@@ -102,6 +102,8 @@ func (c *Client) handleJoinCommand(parts []string, hub *Hub) bool {
 	c.room.Broadcast("Server", []byte(fmt.Sprintf("%s joined the room", c.username)))
     message := fmt.Sprintf("/userRoom %s", c.room.name) 
     c.send <- []byte(message)
+    time.Sleep(5 * time.Millisecond)
+    c.room.BroadcastChatLog(c)
 
 	return true
 }
@@ -156,7 +158,6 @@ func (c *Client) writePump() {
                 return
             }
             w.Write(message)
-
             n := len(c.send)
             for i := 0; i < n; i++ {
                 w.Write(newline)

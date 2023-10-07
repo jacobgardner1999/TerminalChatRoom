@@ -6,10 +6,11 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/gorilla/websocket"
-    "github.com/rivo/tview"
-    "github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 const serverAddress = "ws://localhost:8080/ws"
@@ -91,10 +92,12 @@ func getUserDetails() (username string, roomName string) {
 
 func setUsername(username string) {
     sendMessage(fmt.Sprintf("/name %s", username))
+    time.Sleep(5 * time.Millisecond)
 }
 
 func joinChatRoom(roomName string) { 
     sendMessage(fmt.Sprintf("/join %s", roomName))
+    time.Sleep(5 * time.Millisecond)
 }
 
 func readMessages() {
@@ -108,7 +111,6 @@ func readMessages() {
 			handleRoomUpdate(string(message))
 			continue
 		}
-
         parsedMessage, err := parseMessage(message)
         if err != nil {
             log.Println("Error parsing message: ", err)
