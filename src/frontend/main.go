@@ -29,15 +29,13 @@ var chatTextView = tview.NewTextView()
 
 func main() {
     fmt.Println("Welcome to the Chat CLI")
+    fmt.Println("Connecting to Server...")
 
     err := initWebSocket()
     if err != nil {
         log.Fatal("Error connecting to WebSocket: ", err)
     }
-
-    username, roomName := getUserDetails()
-    setUsername(username)
-    joinChatRoom(roomName)
+    fmt.Println("Connected! Entering Waiting Room...")
 
 	inputField := tview.NewInputField()
     inputField.SetLabel("Type your message: ").
@@ -51,7 +49,7 @@ func main() {
         })
 
 	chatTitle.SetTextAlign(tview.AlignCenter).
-		SetText("Chat Room: " + roomName + "\n").
+		SetText("Chat Room: " + "Waiting Room" + "\n").
 		SetDynamicColors(true).
         SetChangedFunc(func() {
 			app.Draw()
@@ -80,14 +78,6 @@ func initWebSocket() error {
     var err error
     conn, _, err = websocket.DefaultDialer.Dial(serverAddress, nil)
     return err
-}
-
-func getUserDetails() (username string, roomName string) {
-    name := getInput("Enter your username: ")
-
-    chatRoom := getInput("Enter your chat room: ")
-
-    return name, chatRoom
 }
 
 func setUsername(username string) {
