@@ -70,6 +70,11 @@ func (c *Client) readPump(hub *Hub) {
 }
 }
 
+func (c *Client) sendMessage(message string) {
+    currentTime := time.Now().Format("15:04")
+    c.send <- []byte("Server|" + currentTime + "|" + message)
+}
+
 func (c *Client) handleCommand(command string, hub *Hub) bool {
 	parts := strings.Fields(command)
 	if len(parts) < 1 {
@@ -139,9 +144,7 @@ func (c *Client) handleRoomsCommand(hub *Hub) bool {
 
 	message := "Room List: " + strings.Join(roomList, ", ")
 
-    currentTime := time.Now().Format("15:04")
-    c.send <- []byte("Server|" + currentTime + "|" + message)
-
+    c.sendMessage(message)
     return true
 }
 
@@ -156,15 +159,13 @@ func (c *Client) handleHelpCommand() bool {
                     /users - list the clients in the current roomm
                     /quit - quit the program`
 
-    currentTime := time.Now().Format("15:04")
-    c.send <- []byte("Server|" + currentTime + "|" + helpMessage)
-    
+    c.sendMessage(helpMessage)
+
     return true
 }
 
 func (c *Client) handleQuitCommand() bool {
-    currentTime := time.Now().Format("15:04")
-    c.send <- []byte("Server|" + currentTime + "|Exiting program...")
+    c.sendMessage("Exiting program...")
     time.Sleep(2000 *time.Millisecond)
     c.send <- []byte("/quit") 
     c.room.UnregisterClient(c)
@@ -181,8 +182,7 @@ func (c *Client) handleUsersCommand() bool {
 
     message := "Client List: " +strings.Join(clientList, ", ")
 
-    currentTime := time.Now().Format("15:04")
-    c.send <- []byte("Server|" + currentTime + "|" + message)
+    c.sendMessage(message)
 
     return true
 }
