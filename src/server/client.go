@@ -85,6 +85,8 @@ func (c *Client) handleCommand(command string, hub *Hub) bool {
         return c.handleRoomsCommand(hub)
     case "/help":
         return c.handleHelpCommand()
+    case "/users":
+        return c.handleUsersCommand()
     case "/quit":
         return c.handleQuitCommand()
 	default:
@@ -151,6 +153,7 @@ func (c *Client) handleHelpCommand() bool {
                     /join {room} - join a room, will create one if the name does not exist 
                     /name {newName} - change your display name 
                     /rooms - list the open rooms
+                    /users - list the clients in the current roomm
                     /quit - quit the program`
 
     currentTime := time.Now().Format("15:04")
@@ -165,6 +168,21 @@ func (c *Client) handleQuitCommand() bool {
     time.Sleep(2000 *time.Millisecond)
     c.send <- []byte("/quit") 
     c.room.UnregisterClient(c)
+
+    return true
+}
+
+func (c *Client) handleUsersCommand() bool {
+    var clientList []string
+
+    for client := range c.room.clients {
+        clientList = append(clientList, client.username)
+    }
+
+    message := "Client List: " +strings.Join(clientList, ", ")
+
+    currentTime := time.Now().Format("15:04")
+    c.send <- []byte("Server|" + currentTime + "|" + message)
 
     return true
 }
