@@ -92,6 +92,8 @@ func (c *Client) handleCommand(command string, hub *Hub) bool {
         return c.handleHelpCommand()
     case "/users":
         return c.handleUsersCommand()
+    case "/clear":
+        return c.handleClearCommand()
     case "/quit":
         return c.handleQuitCommand()
 	default:
@@ -153,11 +155,15 @@ func (c *Client) handleHelpCommand() bool {
                 To access this help page, just send /help in the chat!
 
                 Here's a list of other commands: 
-                    /join {room} - join a room, will create one if the name does not exist 
-                    /name {newName} - change your display name 
-                    /rooms - list the open rooms
+                    /join {room} - join a room, will create 
+                    one if the name does not exist. 
+                    /name {newName} - change your display name.
+                    /src/frontend/main.go
+                    /rooms - list the open rooms.
                     /users - list the clients in the current roomm
-                    /quit - quit the program`
+                    /clear - clear the chat log. It will come back
+                    if you rejoin the room.
+                    /quit - quit the program.`
 
     c.sendMessage(helpMessage)
 
@@ -184,6 +190,11 @@ func (c *Client) handleUsersCommand() bool {
 
     c.sendMessage(message)
 
+    return true
+}
+
+func (c *Client) handleClearCommand() bool {
+    c.send <- []byte("/clear") 
     return true
 }
 

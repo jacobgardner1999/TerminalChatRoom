@@ -106,6 +106,10 @@ func readMessages() {
         if (string(message) == "/quit") {
             os.Exit(0)
         }
+        if (string(message) == "/clear") {
+            chatTextView.SetText("")
+            continue
+        }
         parsedMessage, err := parseMessage(message)
         if err != nil {
             log.Println("Error parsing message: ", err)
